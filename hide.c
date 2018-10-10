@@ -2,6 +2,8 @@
 #include <stdlib.h>
 
 #define INIT_FILE_SIZE 100
+#define ASCII_CHARS 20 //need to check what the actual value is
+#define ALL_POSSIBLE_CHARS 30 //need to check this too
 //Note sure if all of these are going to work in a .txt file
 #define HORI_TAB '\t'
 #define SPACE ' '
@@ -11,9 +13,17 @@
 #define CARRIAGE_RETURN '\r'
 
 /*
-I think it would be beneficial to include a struct for the file variables eg:
+typedef struct {
+	FILE *file;
+	char *file_vals;
+	char char_selection[ASCII_CHARS]; //this is a fixed size variable
+	char possible_chars[]; //has to be this because there is no way of knowing what chars where in the file once it is hidden
+} input_file_t
+
+
+I think it would be beneficial to include a struct for the file variables:
 	-FILE *file
-	-file_vals
+	-*file_vals
 	-invis_vals
 	-chars_included (array of the characters included in the file)
 	-invis_codes (array of the combinations of whitespace characters that we will map the chars_included to)
@@ -58,7 +68,7 @@ FILE
 	if(argv[1] == NULL || argv[2] == NULL){
 		printf("\nError. Missing inputs.\n");
 		printf("Format is as follows:	");
-		printf("\'secret *file location* *action*\'\n");
+		printf("\'hide *file location* *action*\'\n");
 		printf("The \"action\" parameter can be \'h\'' for hiding file content or \'r\'' for recovering file content.\n");
 		return NULL;
 	}
@@ -104,6 +114,8 @@ get_password(){
 		//Not even sure scanf is the right function
 		printf("Input password: ");
 		scanf("%d\n", &pass);
+		//Need to set pass to -1 if there is a mistake in the input. 
+		//Might also include a break if the user wants to quit.
 	}
 	return pass;
 }
