@@ -7,6 +7,7 @@
 #define ASCII_CHARS  97
 #define PASSWORD_MAX 20
 #define ASCII_FILE_LOCATION "E:/Programming/c/InvisibleDoc/Resources/ascii.txt"
+//this should probably just be "/Resources/ascii.txt" since not everyone will keep this in the same directory
 
 /*
 typedef struct {
