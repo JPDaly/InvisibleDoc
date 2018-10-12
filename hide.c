@@ -69,8 +69,23 @@ main(int argc, char *argv[]){
 	
 	//get chars from ascii file
 	asciis = get_ascii_arrray(ascii_file);
+	fclose(ascii_file);
+	
+	/*
+		From here on I haven't compiled or checked.
+	*/
+	
 	//create an array that represents the chars respectively.
 	mapping = get_mapping_array(password, asciis);
+	
+	/*
+		Testing:
+			-Is mapping just a rearranged version of asciis?
+			-Is the output printing as a string? (is the '\0' character there?).
+			-Any warnings or errors?
+	*/
+	printf("%s\n", asciis);
+	printf("%s\n", mapping);
 	
 	//do as the user asked
 	if(argv[2][0] == 'r'){
@@ -85,7 +100,6 @@ main(int argc, char *argv[]){
 	free(asciis);
 	free(file_vals);
 	fclose(file);
-	fclose(ascii_file);
 	return 0;
 }
 
@@ -234,7 +248,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 		}
 	}
 	if(output_location == 's') {
-		printf("\nFinished. You can now view the file.\n");
+		printf("\nFinished. You can now open the file.\n");
 	}
 	return;
 }
@@ -254,14 +268,16 @@ char
 
  char 
  *get_mapping_array(int password, char *asciis){
-	 
  	int i, j, c, mapped;
  	char *mapping, map_to;
  	mapping = malloc(sizeof(char)*ASCII_CHARS);
 
  	for(i=0; i<ASCII_CHARS; i++){
 		mapped = 0;
- 		map_to = (rand()%ASCII_CHARS)-32;
+ 		/*
+			POTENTIAL ERROR!!!! I don't think you need the -32 in this.
+		*/
+		map_to = (rand()%ASCII_CHARS)-32;
 		//iterate until we have found anoter char to map to
 		while(!mapped) {
 			mapped = 1;
@@ -270,6 +286,7 @@ char
 				//if it is update map_to and repeat while loop
 				if(mapping[j] == asciis[map_to]) {
 					mapped = 0;
+					j=-1;
 					//If at end of array set to 0
 					if(map_to == ASCII_CHARS-1){
 						map_to = 0;
@@ -280,6 +297,7 @@ char
 				}
 			}
 		}
+		mapping[i] = asciis[map_to];
  	}
 	mapping[i] = '\0';
  	return mapping;
