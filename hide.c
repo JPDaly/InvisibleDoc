@@ -30,10 +30,11 @@ I think it would be beneficial to include a struct for the file variables:
 FILE *get_file(char *argv[]);
 char *read_file(FILE *f);
 int get_password();
-void hide(FILE *file, FILE *ascii_file);
-void recover(FILE *file, FILE *ascii_file);
+void hide(FILE *file, char *file_vals, char *asciis, FILE *mapping);
+void recover(FILE *file, char *file_vals, char *asciis, char *mapping);
 char *get_ascii_arrray(FILE *ascii_file);
 char *get_mapping_array(int password, char *asciis);
+void re_write_file(FILE *file, char *file_vals);
 
 int string_to_int(char string[]);
 int power(int base, int power);
@@ -50,6 +51,8 @@ main(int argc, char *argv[]){
 	file_vals = read_file(file);
 	fclose(file);
 	
+	//reopen file so that it can now be written to
+	//open ascii file so we can map the chars in the file to new files
 	file = fopen(argv[1], "w");
 	if(file == NULL){
 		printf("\nError. Couldn't modify file.\n");
@@ -61,20 +64,25 @@ main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
-	asciis = get_ascii_arrray(ascii_file);
-	// mapping = get_mapping_array(password, asciis);
-
-	printf("%s\n", file_vals);
+	//use password to seed the random function
 	srand(get_password());
-
-
 	
+	//get chars from ascii file
+	asciis = get_ascii_arrray(ascii_file);
+	//create an array that represents the chars respectively.
+	mapping = get_mapping_array(password, asciis);
+	
+	//do as the user asked
 	if(argv[2][0] == 'r'){
-		//recover(file, ascii_file);
+		recover(file, file_vals, ascii_file, mapping);
 	} else {
-		hide(file, ascii_file);
+		hide(file, file_vals, ascii_file, mapping);
 	}
 	
+	//can't put code here because I have an error check inside hide which doesn't exit but returns early from the function
+	
+	free(mapping);
+	free(asciis);
 	free(file_vals);
 	fclose(file);
 	fclose(ascii_file);
@@ -165,14 +173,69 @@ power(int base, int power) {
 }
 
 void 
-hide(FILE *file, FILE *ascii_file){
-
+hide(FILE *file, char *file_vals, char *asciis, FILE *mapping){
+	int i=0, j;
+	char c;
+	
+	//iterate through each char in the file
+	while((c=file_vals[i++])!='\0'){
+		//iterate through the possible chars to find a match
+		for(j=0; j<ASCII_CHARS; j++) {
+			//If you didn't find one print error
+			if(asciis[j] == '\0'){
+				printf("\nError. Unknown character in file.\n");
+				printf("Program is being aborted. \nFile will be returned to normal.");
+				re_write_file(file, file_vals);
+				return;
+			//if found one change it to a new char from mapping
+			} else if(c == asciis[j]){
+				fprintf(file, "%c", mapping[j]);
+				break;
+			}
+		}
+	}
+	
 	return;
 }
 
 void 
-recover(FILE *file, FILE *ascii_file){
+recover(FILE *file, char *file_vals, char *asciis, char *mapping){
+	int i=0, j;
+	char output_location, c;
+
+	//ask user if they want to view the content or recover it to the file.
+	while(1) {
+		printf("Would you like to view the content here (v) or save it in the existing file (s)?\n");
+		printf("Input: ");
+		scanf("%c", output_location);
+		if(output_location == 'v' || output_location == 'f'){
+			break;
+		}
+		printf("\nInvalid input. Try again.\n");
+	}
 	
+	//same process as the hide function except mapping is replaced with asciis and vice versa
+	while((c=file_vals[i++])!='\0'){
+		for(j=0; j<ASCII_CHARS; j++) {
+			if(mapping[j] == '\0'){
+				printf("\nError. Unknown character in file.\n");
+				printf("Program is being aborted. \nFile will be returned to normal.\n");
+				print("In other words... I can't recover the file content.\n");
+				re_write_file(file, file_vals);
+				return;
+			} else if(c == mapping[j]){
+				if(output_location == 'v'){
+					printf("%c", asciis[j]);
+				} else {
+					fprintf(file, "%c", asciis[j]);
+				}
+				break;
+			}
+		}
+	}
+	if(output_location == 's') {
+		printf("\nFinished. You can now view the file.\n");
+	}
 	return;
 }
 
@@ -185,17 +248,47 @@ char
 	while((c=fgetc(ascii_file)) != EOF){
 		asciis[i++] = c;
 	}
+	asciis[i] = '\0';
 	return asciis;
 }
 
-// char 
-// *get_mapping_array(int password, char *asciis){
-// 	int i;
-// 	char *mapping, map_to;
-// 	mapping = malloc(sizeof(char)*ASCII_CHARS);
+ char 
+ *get_mapping_array(int password, char *asciis){
+	 
+ 	int i, j, c, mapped;
+ 	char *mapping, map_to;
+ 	mapping = malloc(sizeof(char)*ASCII_CHARS);
 
-// 	for(i=0; i<ASCII_CHARS; i++){
-// 		map_to = asciis[(rand()%ASCII_CHARS)-32];
-// 	}
-// 	return mapping;
-// }
+ 	for(i=0; i<ASCII_CHARS; i++){
+		mapped = 0;
+ 		map_to = (rand()%ASCII_CHARS)-32;
+		//iterate until we have found anoter char to map to
+		while(!mapped) {
+			mapped = 1;
+			//iterate through mapping to see if this char is already used
+			for(j=0; j<i; j++) {
+				//if it is update map_to and repeat while loop
+				if(mapping[j] == asciis[map_to]) {
+					mapped = 0;
+					//If at end of array set to 0
+					if(map_to == ASCII_CHARS-1){
+						map_to = 0;
+					} else {
+						map_to++;
+					}
+					break;
+				}
+			}
+		}
+ 	}
+	mapping[i] = '\0';
+ 	return mapping;
+ }
+ 
+ 
+//Hasn't been tested and may not work
+void 
+re_write_file(FILE *file, char *file_vals){
+	fprintf(file, "%s", file_vals);
+	return;
+}
