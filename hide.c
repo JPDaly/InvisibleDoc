@@ -6,31 +6,13 @@
 #define INIT_FILE_SIZE 100
 #define ASCII_CHARS  97
 #define PASSWORD_MAX 20
-#define ASCII_FILE_LOCATION "E:/Programming/c/InvisibleDoc/Resources/ascii.txt"
-//this should probably just be "/Resources/ascii.txt" since not everyone will keep this in the same directory
-
-/*
-typedef struct {
-	FILE *file;
-	char *file_vals;
-	char char_selection[ASCII_CHARS]; //this is a fixed size variable
-	char possible_chars[]; //has to be this because there is no way of knowing what chars where in the file once it is hidden
-} input_file_t
-
-
-I think it would be beneficial to include a struct for the file variables:
-	-FILE *file
-	-*file_vals
-	-invis_vals
-	-chars_included (array of the characters included in the file)
-	-invis_codes (array of the combinations of whitespace characters that we will map the chars_included to)
-*/	
+#define ASCII_FILE_LOCATION "Resources/ascii.txt"
 
 
 FILE *get_file(char *argv[]);
 char *read_file(FILE *f);
 int get_password();
-void hide(FILE *file, char *file_vals, char *asciis, FILE *mapping);
+void hide(FILE *file, char *file_vals, char *asciis, char *mapping);
 void recover(FILE *file, char *file_vals, char *asciis, char *mapping);
 char *get_ascii_arrray(FILE *ascii_file);
 char *get_mapping_array(int password, char *asciis);
@@ -40,12 +22,13 @@ int string_to_int(char string[]);
 int power(int base, int power);
 
 
-
 int
 main(int argc, char *argv[]){
-	char *file_vals, *asciis, mapping;
+	char *file_vals, *asciis, *mapping;
 	FILE *ascii_file, *file;
+	int password;
 
+	printf("here\n");
 	file = get_file(argv);
 	if(file == NULL) exit(EXIT_FAILURE);
 	file_vals = read_file(file);
@@ -64,34 +47,74 @@ main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
+	printf("here1\n");
 	//use password to seed the random function
-	srand(get_password());
+	password = get_password();
+	srand(password);
 	
+	printf("here2\n");
 	//get chars from ascii file
 	asciis = get_ascii_arrray(ascii_file);
 	fclose(ascii_file);
 	
-	/*
-		From here on I haven't compiled or checked.
-	*/
-	
+	printf("here3\n");
 	//create an array that represents the chars respectively.
 	mapping = get_mapping_array(password, asciis);
-	
-	/*
-		Testing:
-			-Is mapping just a rearranged version of asciis?
-			-Is the output printing as a string? (is the '\0' character there?).
-			-Any warnings or errors?
-	*/
+
 	printf("%s\n", asciis);
 	printf("%s\n", mapping);
 	
+	// int i;
+	// for(i=0; i<ASCII_CHARS; i++) {
+	// 	if(asciis[i] == '\n') {
+	// 		if(mapping[i] == '\n') {
+	// 			printf("%d: asciis = newline and mapping = newline\n", i);
+	// 		} else if(mapping[i] == '\t') {
+	// 			printf("%d: asciis = newline and mapping = tab\n", i);
+	// 		} else if(mapping[i] == ' ') {
+	// 			printf("%d: asciis = newline and mapping = space\n", i);
+	// 		} else {
+	// 			printf("%d: asciis = newline and mapping = %c\n", i, mapping[i]);
+	// 		}
+	// 	} else if(asciis[i] == '\t') {
+	// 		if(mapping[i] == '\n') {
+	// 			printf("%d: asciis = tab and mapping = newline\n", i);
+	// 		} else if(mapping[i] == '\t') {
+	// 			printf("%d: asciis = tab and mapping = tab\n", i);
+	// 		} else if(mapping[i] == ' ') {
+	// 			printf("%d: asciis = tab and mapping = space\n", i);
+	// 		} else {
+	// 			printf("%d: asciis = tab and mapping = %c\n", i, mapping[i]);
+	// 		}
+	// 	} else if(asciis[i] == ' ') {
+	// 		if(mapping[i] == '\n') {
+	// 			printf("%d: asciis = space and mapping = newline\n", i);
+	// 		} else if(mapping[i] == '\t') {
+	// 			printf("%d: asciis = space and mapping = tab\n", i);
+	// 		} else if(mapping[i] == ' ') {
+	// 			printf("%d: asciis = space and mapping = space\n", i);
+	// 		} else {
+	// 			printf("%d: asciis = space and mapping = %c\n", i, mapping[i]);
+	// 		}
+	// 	} else {
+	// 		if(mapping[i] == '\n') {
+	// 			printf("%d: asciis = %c and mapping = newline\n",i , asciis[i]);
+	// 		} else if(mapping[i] == '\t') {
+	// 			printf("%d: asciis = %c and mapping = tab\n",i , asciis[i]);
+	// 		} else if(mapping[i] == ' ') {
+	// 			printf("%d: asciis = %c and mapping = space\n",i , asciis[i]);
+	// 		} else {
+	// 			printf("%d: asciis = %c and mapping = %c\n", i, asciis[i] , mapping[i]);
+	// 		}
+	// 	}
+	// }
+
+
 	//do as the user asked
 	if(argv[2][0] == 'r'){
-		recover(file, file_vals, ascii_file, mapping);
+		recover(file, file_vals, asciis, mapping);
 	} else {
-		hide(file, file_vals, ascii_file, mapping);
+		hide(file, file_vals, asciis, mapping);
 	}
 	
 	//can't put code here because I have an error check inside hide which doesn't exit but returns early from the function
@@ -187,7 +210,7 @@ power(int base, int power) {
 }
 
 void 
-hide(FILE *file, char *file_vals, char *asciis, FILE *mapping){
+hide(FILE *file, char *file_vals, char *asciis, char *mapping){
 	int i=0, j;
 	char c;
 	
@@ -221,7 +244,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 	while(1) {
 		printf("Would you like to view the content here (v) or save it in the existing file (s)?\n");
 		printf("Input: ");
-		scanf("%c", output_location);
+		scanf("%c", &output_location);
 		if(output_location == 'v' || output_location == 'f'){
 			break;
 		}
@@ -234,7 +257,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 			if(mapping[j] == '\0'){
 				printf("\nError. Unknown character in file.\n");
 				printf("Program is being aborted. \nFile will be returned to normal.\n");
-				print("In other words... I can't recover the file content.\n");
+				printf("In other words... I can't recover the file content.\n");
 				re_write_file(file, file_vals);
 				return;
 			} else if(c == mapping[j]){
@@ -258,6 +281,10 @@ char
 	int i=0;
 	char *asciis, c;
 	asciis = malloc(sizeof(char)*ASCII_CHARS);
+	if(asciis == NULL){
+		printf("Error while trying to allocate space.\n");
+		exit(EXIT_FAILURE);
+	}
 	
 	while((c=fgetc(ascii_file)) != EOF){
 		asciis[i++] = c;
@@ -268,8 +295,8 @@ char
 
  char 
  *get_mapping_array(int password, char *asciis){
- 	int i, j, c, mapped;
- 	char *mapping, map_to;
+ 	int i, j, mapped, map_to;
+ 	char *mapping;
  	mapping = malloc(sizeof(char)*ASCII_CHARS);
 
  	for(i=0; i<ASCII_CHARS; i++){
@@ -277,7 +304,7 @@ char
  		/*
 			POTENTIAL ERROR!!!! I don't think you need the -32 in this.
 		*/
-		map_to = (rand()%ASCII_CHARS)-32;
+		map_to = (rand()%ASCII_CHARS);
 		//iterate until we have found anoter char to map to
 		while(!mapped) {
 			mapped = 1;
