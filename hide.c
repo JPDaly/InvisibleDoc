@@ -57,6 +57,9 @@ main(int argc, char *argv[]){
 	//create an array that represents the chars respectively.
 	mapping = get_mapping_array(password, asciis);
 
+	printf("%s\n\n", asciis);
+	printf("%s\n\n", mapping);
+	
 	//do as the user asked
 	if(argv[2][0] == 'r'){
 		recover(file, file_vals, asciis, mapping);
@@ -267,29 +270,23 @@ char
 //Uses password to return an array of rearranged ascii characters
  char 
  *get_mapping_array(int password, char *asciis){
- 	int i, j, mapped, map_to;
+ 	int i, j, map_to;
  	char *mapping;
  	mapping = malloc(sizeof(char)*ASCII_CHARS);
 
  	for(i=0; i<ASCII_CHARS; i++){
-		mapped = 0;
 		map_to = (rand()%ASCII_CHARS);
-		//iterate until we have found anoter char to map to
-		while(!mapped) {
-			mapped = 1;
-			//iterate through mapping to see if this char is already used
-			for(j=0; j<i; j++) {
-				//if it is update map_to and repeat while loop
-				if(mapping[j] == asciis[map_to]) {
-					mapped = 0;
-					j=-1;
-					//If at end of array set to 0
-					if(map_to == ASCII_CHARS-1){
-						map_to = 0;
-					} else {
-						map_to++;
-					}
-					break;
+		
+		//iterate through mapping to see if this char is already used
+		for(j=0; j<i; j++) {
+			//if it is update map_to and repeat while loop
+			if(mapping[j] == asciis[map_to]) {
+				j=-1;
+				//If at end of array set to 0
+				if(map_to == ASCII_CHARS-1){
+					map_to = 0;
+				} else {
+					map_to++;
 				}
 			}
 		}
@@ -299,7 +296,7 @@ char
  	return mapping;
  }
   
- //Uses content of the file when first opened to restore it to how it was before program started
+ //Restores file to the way it was before the program started
 void 
 re_write_file(FILE *file, char *file_vals){
 	fprintf(file, "%s", file_vals);
