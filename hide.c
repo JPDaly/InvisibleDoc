@@ -12,12 +12,11 @@
 FILE *get_file(char *argv[]);
 char *read_file(FILE *f);
 int get_password();
-void hide(FILE *file, char *file_vals, char *asciis, char *mapping);
+void hide(char *argv, FILE *file, char *file_vals, char *asciis, char *mapping);
 void recover(FILE *file, char *file_vals, char *asciis, char *mapping);
 char *get_ascii_arrray(FILE *ascii_file);
 char *get_mapping_array(int password, char *asciis);
 void re_write_file(FILE *file, char *file_vals);
-
 int string_to_int(char string[]);
 int power(int base, int power);
 
@@ -28,7 +27,7 @@ main(int argc, char *argv[]){
 	FILE *ascii_file, *file;
 	int password;
 
-	printf("here\n");
+	//Open file and store it's content
 	file = get_file(argv);
 	if(file == NULL) exit(EXIT_FAILURE);
 	file_vals = read_file(file);
@@ -47,74 +46,22 @@ main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
-	printf("here1\n");
 	//use password to seed the random function
 	password = get_password();
 	srand(password);
 	
-	printf("here2\n");
 	//get chars from ascii file
 	asciis = get_ascii_arrray(ascii_file);
 	fclose(ascii_file);
 	
-	printf("here3\n");
 	//create an array that represents the chars respectively.
 	mapping = get_mapping_array(password, asciis);
-
-	printf("%s\n", asciis);
-	printf("%s\n", mapping);
-	
-	// int i;
-	// for(i=0; i<ASCII_CHARS; i++) {
-	// 	if(asciis[i] == '\n') {
-	// 		if(mapping[i] == '\n') {
-	// 			printf("%d: asciis = newline and mapping = newline\n", i);
-	// 		} else if(mapping[i] == '\t') {
-	// 			printf("%d: asciis = newline and mapping = tab\n", i);
-	// 		} else if(mapping[i] == ' ') {
-	// 			printf("%d: asciis = newline and mapping = space\n", i);
-	// 		} else {
-	// 			printf("%d: asciis = newline and mapping = %c\n", i, mapping[i]);
-	// 		}
-	// 	} else if(asciis[i] == '\t') {
-	// 		if(mapping[i] == '\n') {
-	// 			printf("%d: asciis = tab and mapping = newline\n", i);
-	// 		} else if(mapping[i] == '\t') {
-	// 			printf("%d: asciis = tab and mapping = tab\n", i);
-	// 		} else if(mapping[i] == ' ') {
-	// 			printf("%d: asciis = tab and mapping = space\n", i);
-	// 		} else {
-	// 			printf("%d: asciis = tab and mapping = %c\n", i, mapping[i]);
-	// 		}
-	// 	} else if(asciis[i] == ' ') {
-	// 		if(mapping[i] == '\n') {
-	// 			printf("%d: asciis = space and mapping = newline\n", i);
-	// 		} else if(mapping[i] == '\t') {
-	// 			printf("%d: asciis = space and mapping = tab\n", i);
-	// 		} else if(mapping[i] == ' ') {
-	// 			printf("%d: asciis = space and mapping = space\n", i);
-	// 		} else {
-	// 			printf("%d: asciis = space and mapping = %c\n", i, mapping[i]);
-	// 		}
-	// 	} else {
-	// 		if(mapping[i] == '\n') {
-	// 			printf("%d: asciis = %c and mapping = newline\n",i , asciis[i]);
-	// 		} else if(mapping[i] == '\t') {
-	// 			printf("%d: asciis = %c and mapping = tab\n",i , asciis[i]);
-	// 		} else if(mapping[i] == ' ') {
-	// 			printf("%d: asciis = %c and mapping = space\n",i , asciis[i]);
-	// 		} else {
-	// 			printf("%d: asciis = %c and mapping = %c\n", i, asciis[i] , mapping[i]);
-	// 		}
-	// 	}
-	// }
-
 
 	//do as the user asked
 	if(argv[2][0] == 'r'){
 		recover(file, file_vals, asciis, mapping);
 	} else {
-		hide(file, file_vals, asciis, mapping);
+		hide(argv[1], file, file_vals, asciis, mapping);
 	}
 	
 	//can't put code here because I have an error check inside hide which doesn't exit but returns early from the function
@@ -129,9 +76,11 @@ main(int argc, char *argv[]){
 //**************************************************************************
 // Functions
 
+//Returns file string and checks for input errors
 FILE 
 *get_file(char *argv[]) {
 	FILE *temp_file;
+	//Error if inputs are missing
 	if(argv[1] == NULL || argv[2] == NULL){
 		printf("\nError. Missing inputs.\n");
 		printf("Format is as follows:	");
@@ -139,11 +88,13 @@ FILE
 		printf("The \"action\" parameter can be \'h\'' for hiding file content or \'r\'' for recovering file content.\n");
 		return NULL;
 	}
-	temp_file = fopen(argv[1], "w");
+	//Error if file can't be opened
+	temp_file = fopen(argv[1], "r");
 	if(temp_file == NULL){
 		printf("\nError. Invalid file input.\n");
 		printf("Make sure to include the entire file directory.\n");
 		return NULL;
+	//Error if second input doesn't match options
 	} else if(argv[2][0] != 'h' && argv[2][0] != 'r'){
 		printf("\nError. Invalid action.\n");
 		printf("The \"action\" parameter can be \'h\'' for hiding file content or \'r\'' for recovering file content.\n");
@@ -152,17 +103,21 @@ FILE
 	return temp_file;
 }
 
+//Returns array of characters found in the file
 char 
 *read_file(FILE *file) {
 	int i=0, vals_size=INIT_FILE_SIZE;
 	char c, *vals;
+	
 	vals = malloc(sizeof(char)*vals_size);
 	if(vals == NULL){
 		printf("Malloc Error.\n");
 		exit(EXIT_FAILURE);
 	}
+	//iterate through file one at a time
 	while((c = fgetc(file)) != EOF) {
 		vals[i++] = c;
+		//allocate more space for array if necassary
 		if(i==vals_size) {
 			vals_size *= 2;
 			vals = realloc(vals, sizeof(char)*vals_size);
@@ -172,34 +127,41 @@ char
 	return vals; 
 }
 
+//gets users password for transforming file
 int
 get_password(){
 	int i;
 	char c, pass[PASSWORD_MAX];
+	//iteratively request the user to input a password until a valid password is given
 	while(1) {
 		printf("Input password number: ");
 		scanf("%s", pass);
 		i=0;
+		//check that the password is an integer
 		while((c=pass[i++])!='\0') {
 			if(isalpha(c)) break;
 		}
 		if(c=='\0') break;
 		printf("\nPassword must be an integer.\n");
 	}
+	//Return the password as an int
 	return string_to_int(pass);
 }
 
+//Used in get_password to return the string password as an int
 int 
 string_to_int(char string[]) {
 	int i, str_len, int_val=0;
 
-	str_len = strlen(string)-1;
-	for(i=0; i<=str_len; i++) {
+	//convert string to int using ascii values of chars.
+	str_len = strlen(string);
+	for(i=0; i<str_len; i++) {
 		int_val += (string[i]-48)*power(10,str_len-i);
 	}
 	return int_val;
 }
 
+//Used in string_to_int to return powers of 10 (this function works for other bases though)
 int 
 power(int base, int power) {
 	int i, squared=1;
@@ -210,7 +172,7 @@ power(int base, int power) {
 }
 
 void 
-hide(FILE *file, char *file_vals, char *asciis, char *mapping){
+hide(char *argv1, FILE *file, char *file_vals, char *asciis, char *mapping){
 	int i=0, j;
 	char c;
 	
@@ -218,20 +180,22 @@ hide(FILE *file, char *file_vals, char *asciis, char *mapping){
 	while((c=file_vals[i++])!='\0'){
 		//iterate through the possible chars to find a match
 		for(j=0; j<ASCII_CHARS; j++) {
-			//If you didn't find one print error
-			if(asciis[j] == '\0'){
-				printf("\nError. Unknown character in file.\n");
-				printf("Program is being aborted. \nFile will be returned to normal.");
-				re_write_file(file, file_vals);
-				return;
 			//if found one change it to a new char from mapping
-			} else if(c == asciis[j]){
+			if(c == asciis[j]){
 				fprintf(file, "%c", mapping[j]);
 				break;
 			}
 		}
+		//If you didn't find one print error
+		if(j == ASCII_CHARS){
+			printf("\nError. Unknown character, %c in file.\n", c);
+			printf("Program is being aborted. \nFile will be returned to normal.");
+			//Reopened so that any changes that have already been made are cleared
+			file = freopen(argv1, "w", stdout);
+			re_write_file(file, file_vals);
+			return;
+		}
 	}
-	
 	return;
 }
 
@@ -241,6 +205,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 	char output_location, c;
 
 	//ask user if they want to view the content or recover it to the file.
+	getchar();
 	while(1) {
 		printf("Would you like to view the content here (v) or save it in the existing file (s)?\n");
 		printf("Input: ");
@@ -270,22 +235,28 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 			}
 		}
 	}
-	if(output_location == 's') {
+	if(output_location == 'f') {
 		printf("\nFinished. You can now open the file.\n");
+	} else {
+		re_write_file(file, file_vals);
 	}
 	return;
 }
 
+//Reads through Resources/ascii.txt to get all possible chars
 char 
 *get_ascii_arrray(FILE *ascii_file){
 	int i=0;
 	char *asciis, c;
+	
+	//create array
 	asciis = malloc(sizeof(char)*ASCII_CHARS);
 	if(asciis == NULL){
 		printf("Error while trying to allocate space.\n");
 		exit(EXIT_FAILURE);
 	}
 	
+	//iterate through the file and fill the array
 	while((c=fgetc(ascii_file)) != EOF){
 		asciis[i++] = c;
 	}
@@ -293,6 +264,7 @@ char
 	return asciis;
 }
 
+//Uses password to return an array of rearranged ascii characters
  char 
  *get_mapping_array(int password, char *asciis){
  	int i, j, mapped, map_to;
@@ -301,9 +273,6 @@ char
 
  	for(i=0; i<ASCII_CHARS; i++){
 		mapped = 0;
- 		/*
-			POTENTIAL ERROR!!!! I don't think you need the -32 in this.
-		*/
 		map_to = (rand()%ASCII_CHARS);
 		//iterate until we have found anoter char to map to
 		while(!mapped) {
@@ -329,9 +298,8 @@ char
 	mapping[i] = '\0';
  	return mapping;
  }
- 
- 
-//Hasn't been tested and may not work
+  
+ //Uses content of the file when first opened to restore it to how it was before program started
 void 
 re_write_file(FILE *file, char *file_vals){
 	fprintf(file, "%s", file_vals);
