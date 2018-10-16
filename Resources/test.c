@@ -1,13 +1,1 @@
-#include <stdio.h>
-
-int
-main(int argc, char *argv[]){
-	
-	while(1) {
-		getchar();
-		printf("\r *");
-	}
-	return 0;
-}
-
-C:\Users\JordanDaly\Documents\Programming\InvisibleDoc\Resources\test.c
+?#$"fic{S0+)c#'bdt\\#$)\h!#$n#$)S!:5"^S"d!:S>!:5-4`XK\T\T.d#f{nRXSK\TT5{)"d!:nXs\TT(:#$)7nWZ:S>WXs\TM\T:{)i:$Sxs\M\\	GZP+{:+Zg':c!$B!f[ZB'"ih{$)+ZD:'5:!hh#$5ZO$-#+#&f{B'"Zk{+'i:"{+Z){+)b"

@@ -116,7 +116,7 @@ get_input(char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	scanf("%s", argv[2]);
-	getchar();
+	while(getchar() != '\n');
 	return;
 }
 
@@ -178,11 +178,11 @@ get_password(){
 
 	//iteratively request the user to input a password until a valid password is given
 	printf("\nInput password: ");
-	while((c=getchar())) {
-		if(c == '\n') break;
+	while((c=getchar()) != '\n') {
 		if(i == PASSWORD_MAX) {
-			printf("\nPassword too long. \n Try again.\n");
+			printf("\nThat password is too long. \n Try again.\n");
 			printf("\nInput password: ");
+			while(getchar() != '\n');
 			i = 0;
 			continue;
 		}
@@ -255,6 +255,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 		printf("\nWould you like to view the content here (v) or save it in the existing file (s)?\n");
 		printf("Input: ");
 		scanf("%c", &output_location);
+		while(getchar() != '\n');
 		if(output_location == 'v' || output_location == 's'){
 			break;
 		}
