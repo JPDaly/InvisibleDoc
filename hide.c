@@ -7,6 +7,7 @@
 #define ASCII_CHARS  97
 #define PASSWORD_MAX 20
 #define ASCII_FILE_LOCATION "Resources/ascii.txt"
+#define INIT_FILE_LOCATION 100
 
 
 FILE *get_file(char *argv[]);
@@ -19,6 +20,7 @@ char *get_mapping_array(int password, char *asciis);
 void re_write_file(FILE *file, char *file_vals);
 int string_to_int(char string[]);
 int power(int base, int power);
+void get_input(char *argv[]);
 
 
 int
@@ -26,7 +28,12 @@ main(int argc, char *argv[]){
 	char *file_vals, *asciis, *mapping;
 	FILE *ascii_file, *file;
 	int password;
-
+	
+	//if user hasn't given an input at launch ask for the input
+	if(argv[1] == NULL) {
+		get_input(argv);
+	}
+	
 	//Open file and store it's content
 	file = get_file(argv);
 	if(file == NULL) exit(EXIT_FAILURE);
@@ -57,9 +64,6 @@ main(int argc, char *argv[]){
 	//create an array that represents the chars respectively.
 	mapping = get_mapping_array(password, asciis);
 
-	printf("%s\n\n", asciis);
-	printf("%s\n\n", mapping);
-	
 	//do as the user asked
 	if(argv[2][0] == 'r'){
 		recover(file, file_vals, asciis, mapping);
@@ -68,16 +72,53 @@ main(int argc, char *argv[]){
 	}
 	
 	//can't put code here because I have an error check inside hide which doesn't exit but returns early from the function
-	
 	free(mapping);
 	free(asciis);
 	free(file_vals);
 	fclose(file);
+	
 	return 0;
 }
 
 //**************************************************************************
 // Functions
+
+void
+get_input(char *argv[]) {
+	int i=0, size = INIT_FILE_LOCATION;
+	char c;
+	
+	argv[1] = malloc(sizeof(char)*size);
+	if(argv[1] == NULL) {
+		printf("Error while allocating space.\n");
+		exit(EXIT_FAILURE);
+	}
+	
+	printf("Enter the location of the file you want changed: ");
+	while((c=getchar()) != '\n') {
+		argv[1][i++] = c;
+		if(i == size) {
+			size *= 2;
+			argv[1] = realloc(argv[1], sizeof(char)*size);
+			if(argv[1] == NULL) {
+				printf("Error while allocating space.\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	argv[1][i] = '\0';
+	
+	//scanf("%s", argv[1]);
+	printf("Enter the action you want ('r' for recover or 'h' for hide content): ");
+	argv[2] = malloc(sizeof(char)*3);
+	if(argv[2] == NULL) {
+		printf("Error while allocating space.\n");
+		exit(EXIT_FAILURE);
+	}
+	scanf("%s", argv[2]);
+	return;
+}
+
 
 //Returns file string and checks for input errors
 FILE 
@@ -86,8 +127,6 @@ FILE
 	//Error if inputs are missing
 	if(argv[1] == NULL || argv[2] == NULL){
 		printf("\nError. Missing inputs.\n");
-		printf("Format is as follows:	");
-		printf("\'hide *file location* *action*\'\n");
 		printf("The \"action\" parameter can be \'h\'' for hiding file content or \'r\'' for recovering file content.\n");
 		return NULL;
 	}
@@ -137,7 +176,7 @@ get_password(){
 	char c, pass[PASSWORD_MAX];
 	//iteratively request the user to input a password until a valid password is given
 	while(1) {
-		printf("Input password number: ");
+		printf("\nInput password number: ");
 		scanf("%s", pass);
 		i=0;
 		//check that the password is an integer
@@ -210,13 +249,17 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 	//ask user if they want to view the content or recover it to the file.
 	getchar();
 	while(1) {
-		printf("Would you like to view the content here (v) or save it in the existing file (s)?\n");
+		printf("\nWould you like to view the content here (v) or save it in the existing file (s)?\n");
 		printf("Input: ");
 		scanf("%c", &output_location);
 		if(output_location == 'v' || output_location == 'f'){
 			break;
 		}
 		printf("\nInvalid input. Try again.\n");
+	}
+	
+	if(output_location == 'v') {
+		printf("\n\n************************************************************************************************************************\n");
 	}
 	
 	//same process as the hide function except mapping is replaced with asciis and vice versa
@@ -241,6 +284,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 	if(output_location == 'f') {
 		printf("\nFinished. You can now open the file.\n");
 	} else {
+		printf("\n\n************************************************************************************************************************\n\n");
 		re_write_file(file, file_vals);
 	}
 	return;
@@ -272,7 +316,12 @@ char
  *get_mapping_array(int password, char *asciis){
  	int i, j, map_to;
  	char *mapping;
+	
  	mapping = malloc(sizeof(char)*ASCII_CHARS);
+	if (mapping == NULL) {
+		printf("Error while trying to allocate space\n");
+		exit(EXIT_FAILURE);
+	}
 
  	for(i=0; i<ASCII_CHARS; i++){
 		map_to = (rand()%ASCII_CHARS);

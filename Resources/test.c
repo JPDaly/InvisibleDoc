@@ -2,6 +2,12 @@
 
 int
 main(int argc, char *argv[]){
-	printf("Hello World");
+	
+	while(1) {
+		getchar();
+		printf("\r *");
+	}
 	return 0;
 }
+
+C:\Users\JordanDaly\Documents\Programming\InvisibleDoc\Resources\test.c
