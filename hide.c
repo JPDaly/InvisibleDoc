@@ -116,6 +116,7 @@ get_input(char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	scanf("%s", argv[2]);
+	getchar();
 	return;
 }
 
@@ -172,20 +173,22 @@ char
 //gets users password for transforming file
 int
 get_password(){
-	int i;
+	int i=0;
 	char c, pass[PASSWORD_MAX];
+
 	//iteratively request the user to input a password until a valid password is given
-	while(1) {
-		printf("\nInput password number: ");
-		scanf("%s", pass);
-		i=0;
-		//check that the password is an integer
-		while((c=pass[i++])!='\0') {
-			if(isalpha(c)) break;
+	printf("\nInput password: ");
+	while((c=getchar())) {
+		if(c == '\n') break;
+		if(i == PASSWORD_MAX) {
+			printf("\nPassword too long. \n Try again.\n");
+			printf("\nInput password: ");
+			i = 0;
+			continue;
 		}
-		if(c=='\0') break;
-		printf("\nPassword must be an integer.\n");
+		pass[i++] = c;
 	}
+	pass[i] = '\0';
 	//Return the password as an int
 	return string_to_int(pass);
 }
@@ -247,12 +250,12 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 	char output_location, c;
 
 	//ask user if they want to view the content or recover it to the file.
-	getchar();
+	
 	while(1) {
 		printf("\nWould you like to view the content here (v) or save it in the existing file (s)?\n");
 		printf("Input: ");
 		scanf("%c", &output_location);
-		if(output_location == 'v' || output_location == 'f'){
+		if(output_location == 'v' || output_location == 's'){
 			break;
 		}
 		printf("\nInvalid input. Try again.\n");
@@ -281,7 +284,7 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 			}
 		}
 	}
-	if(output_location == 'f') {
+	if(output_location == 's') {
 		printf("\nFinished. You can now open the file.\n");
 	} else {
 		printf("\n\n************************************************************************************************************************\n\n");
