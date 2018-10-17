@@ -4,7 +4,6 @@
 #include <ctype.h>
 
 #define INIT_FILE_SIZE 100
-#define ASCII_CHARS  97
 #define PASSWORD_MAX 20
 #define ASCII_FILE_LOCATION "Resources/ascii.txt"
 #define INIT_FILE_LOCATION 100
@@ -13,21 +12,24 @@
 FILE *get_file(char *argv[]);
 char *read_file(FILE *f);
 int get_password();
-void hide(char *argv, FILE *file, char *file_vals, char *asciis, char *mapping);
-void recover(FILE *file, char *file_vals, char *asciis, char *mapping);
-char *get_ascii_arrray(FILE *ascii_file);
-char *get_mapping_array(int password, char *asciis);
+void hide(char *argv, FILE *file, char *file_vals, char *asciis, char *mapping, int *ASCII_CHARS);
+void recover(FILE *file, char *file_vals, char *asciis, char *mapping, int *ASCII_CHARS);
+char *get_ascii_arrray(FILE *ascii_file, int *ASCII_CHARS);
+char *get_mapping_array(int password, char *asciis, int *ASCII_CHARS);
 void re_write_file(FILE *file, char *file_vals);
 int string_to_int(char string[]);
 int power(int base, int power);
 void get_input(char *argv[]);
+void re_write_ascii(FILE *ascii_file, char *asciis, int ASCII_CHARS);
+void unknown_character(char unknown, char *asciis, int *ASCII_CHARS);
+
 
 
 int
 main(int argc, char *argv[]){
 	char *file_vals, *asciis, *mapping;
 	FILE *ascii_file, *file;
-	int password;
+	int password, ASCII_CHARS;
 	
 	//if user hasn't given an input at launch ask for the input
 	if(argv[1] == NULL) {
@@ -58,18 +60,20 @@ main(int argc, char *argv[]){
 	srand(password);
 	
 	//get chars from ascii file
-	asciis = get_ascii_arrray(ascii_file);
+	asciis = get_ascii_arrray(ascii_file, &ASCII_CHARS);
 	fclose(ascii_file);
-	
+	printf("here\n");
 	//create an array that represents the chars respectively.
-	mapping = get_mapping_array(password, asciis);
-
+	mapping = get_mapping_array(password, asciis, &ASCII_CHARS);
+	printf("here1\n");
+	printf("here\n");
 	//do as the user asked
 	if(argv[2][0] == 'r'){
-		recover(file, file_vals, asciis, mapping);
+		recover(file, file_vals, asciis, mapping, &ASCII_CHARS);
 	} else {
-		hide(argv[1], file, file_vals, asciis, mapping);
+		hide(argv[1], file, file_vals, asciis, mapping, &ASCII_CHARS);
 	}
+	
 	
 	//can't put code here because I have an error check inside hide which doesn't exit but returns early from the function
 	free(mapping);
@@ -201,7 +205,7 @@ string_to_int(char string[]) {
 	//convert string to int using ascii values of chars.
 	str_len = strlen(string);
 	for(i=0; i<str_len; i++) {
-		int_val += (string[i]-48)*power(10,str_len-i);
+		int_val += (string[i]-48)*power(10,str_len-(i+1));
 	}
 	return int_val;
 }
@@ -217,14 +221,14 @@ power(int base, int power) {
 }
 
 void 
-hide(char *argv1, FILE *file, char *file_vals, char *asciis, char *mapping){
+hide(char *argv1, FILE *file, char *file_vals, char *asciis, char *mapping, int *ASCII_CHARS){
 	int i=0, j;
 	char c;
 	
 	//iterate through each char in the file
 	while((c=file_vals[i++])!='\0'){
 		//iterate through the possible chars to find a match
-		for(j=0; j<ASCII_CHARS; j++) {
+		for(j=0; j<*ASCII_CHARS; j++) {
 			//if found one change it to a new char from mapping
 			if(c == asciis[j]){
 				fprintf(file, "%c", mapping[j]);
@@ -232,9 +236,8 @@ hide(char *argv1, FILE *file, char *file_vals, char *asciis, char *mapping){
 			}
 		}
 		//If you didn't find one print error
-		if(j == ASCII_CHARS){
-			printf("\nError. Unknown character, %c in file.\n", c);
-			printf("Program is being aborted. \nFile will be returned to normal.");
+		if(j == *ASCII_CHARS){
+			unknown_character(c, asciis, ASCII_CHARS);
 			//Reopened so that any changes that have already been made are cleared
 			file = freopen(argv1, "w", stdout);
 			re_write_file(file, file_vals);
@@ -245,7 +248,7 @@ hide(char *argv1, FILE *file, char *file_vals, char *asciis, char *mapping){
 }
 
 void 
-recover(FILE *file, char *file_vals, char *asciis, char *mapping){
+recover(FILE *file, char *file_vals, char *asciis, char *mapping, int *ASCII_CHARS){
 	int i=0, j;
 	char output_location, c;
 
@@ -268,11 +271,9 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 	
 	//same process as the hide function except mapping is replaced with asciis and vice versa
 	while((c=file_vals[i++])!='\0'){
-		for(j=0; j<ASCII_CHARS; j++) {
+		for(j=0; j<*ASCII_CHARS; j++) {
 			if(mapping[j] == '\0'){
-				printf("\nError. Unknown character in file.\n");
-				printf("Program is being aborted. \nFile will be returned to normal.\n");
-				printf("In other words... I can't recover the file content.\n");
+				unknown_character(c, asciis, ASCII_CHARS);
 				re_write_file(file, file_vals);
 				return;
 			} else if(c == mapping[j]){
@@ -296,17 +297,27 @@ recover(FILE *file, char *file_vals, char *asciis, char *mapping){
 
 //Reads through Resources/ascii.txt to get all possible chars
 char 
-*get_ascii_arrray(FILE *ascii_file){
+*get_ascii_arrray(FILE *ascii_file, int *ASCII_CHARS){
 	int i=0;
-	char *asciis, c;
+	char *asciis, c, temp_n_chars[10];
+	
+	
+	while((c=fgetc(ascii_file)) != '\n') {
+		temp_n_chars[i++] = c;
+	}
+	temp_n_chars[i] = '\0';
+	printf("%s\n", temp_n_chars);
+	*ASCII_CHARS = string_to_int(temp_n_chars);
+	printf("%d\n", *ASCII_CHARS);
 	
 	//create array
-	asciis = malloc(sizeof(char)*ASCII_CHARS);
+	asciis = malloc(sizeof(char)**ASCII_CHARS);
 	if(asciis == NULL){
 		printf("Error while trying to allocate space.\n");
 		exit(EXIT_FAILURE);
 	}
 	
+	i=0;
 	//iterate through the file and fill the array
 	while((c=fgetc(ascii_file)) != EOF){
 		asciis[i++] = c;
@@ -317,18 +328,18 @@ char
 
 //Uses password to return an array of rearranged ascii characters
  char 
- *get_mapping_array(int password, char *asciis){
+ *get_mapping_array(int password, char *asciis, int *ASCII_CHARS){
  	int i, j, map_to;
  	char *mapping;
 	
- 	mapping = malloc(sizeof(char)*ASCII_CHARS);
+ 	mapping = malloc(sizeof(char)**ASCII_CHARS);
 	if (mapping == NULL) {
 		printf("Error while trying to allocate space\n");
 		exit(EXIT_FAILURE);
 	}
 
- 	for(i=0; i<ASCII_CHARS; i++){
-		map_to = (rand()%ASCII_CHARS);
+ 	for(i=0; i<*ASCII_CHARS; i++){
+		map_to = (rand()%*ASCII_CHARS);
 		
 		//iterate through mapping to see if this char is already used
 		for(j=0; j<i; j++) {
@@ -336,7 +347,7 @@ char
 			if(mapping[j] == asciis[map_to]) {
 				j=-1;
 				//If at end of array set to 0
-				if(map_to == ASCII_CHARS-1){
+				if(map_to == *ASCII_CHARS-1){
 					map_to = 0;
 				} else {
 					map_to++;
@@ -353,5 +364,41 @@ char
 void 
 re_write_file(FILE *file, char *file_vals){
 	fprintf(file, "%s", file_vals);
+	return;
+}
+
+
+void 
+unknown_character(char unknown, char *asciis, int *ASCII_CHARS){
+	char choice = 'z';
+	FILE *ascii_file;
+	
+	printf("\nError. Unknown character, %c in file.\n", unknown);
+	
+	while(1) {
+		printf("Would you like to add this character to the ascii.txt file? (y or n): ");
+		choice = getchar();
+		while(getchar() != '\n');
+		if(choice == 'y' || choice == 'n') break;
+		printf("Invalid input. Try again.\n");
+	}
+	
+	if(choice == 'y') {
+		*ASCII_CHARS += 1;
+		asciis = realloc(asciis, sizeof(char)**ASCII_CHARS);
+		if(asciis == NULL) {
+			printf("Unable to update asciis.txt\n");
+			return;
+		}
+		ascii_file = fopen(ASCII_FILE_LOCATION, "w");
+		asciis[*ASCII_CHARS-1] = unknown;
+		fprintf(ascii_file, "%d\n", *ASCII_CHARS);
+		fprintf(ascii_file, "%s", asciis);
+		printf("ascii.txt has been updated.\n");
+		printf("Program is being aborted. \nFile will be returned to normal.\n");
+	} else {
+		printf("Program is being aborted. \nFile will be returned to normal.\n");
+	}
+	fclose(ascii_file);
 	return;
 }
